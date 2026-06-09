@@ -234,8 +234,19 @@ split_on_arrow(Text, Left, Right) :-
 
 normalize_arrow_left(Text, Clean) :-
     trim_string(Text, Text0),
-    strip_prefix("examples:", Text0, Clean0),
-    strip_prefix("example:", Clean0, Clean).
+    % Find "examples:" or "example:" anywhere in the text and take what follows.
+    % This handles the common pattern "... Examples: [1,2,3]" where the keyword
+    % is preceded by the full sentence description.
+    (   sub_string(Text0, Before, 9, _, "examples:")
+    ->  Start is Before + 9,
+        sub_string(Text0, Start, _, 0, Rest0),
+        trim_string(Rest0, Clean)
+    ;   sub_string(Text0, Before, 8, _, "example:")
+    ->  Start is Before + 8,
+        sub_string(Text0, Start, _, 0, Rest0),
+        trim_string(Rest0, Clean)
+    ;   Clean = Text0
+    ).
 
 normalize_arrow_right(Text, Clean) :-
     split_string(Text, ".", " \t\n", [A|_]),
