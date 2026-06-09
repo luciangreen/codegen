@@ -21,10 +21,50 @@ build_candidates(spec(Name, Dict), Profile, Candidates) :-
     Operation = Dict.get(operation),
     BasePredicate = Name,
     op_goal(Operation, OpGoal),
+    select_templates(Profile, Templates),
     findall(
         candidate(Template, Score, Code),
-        candidate_template(Template, BasePredicate, OpGoal, Profile, Score, Code),
-        Candidates
+        (member(Template, Templates), candidate_template(Template, BasePredicate, OpGoal, Profile, Score, Code)),
+        Candidates0
+    ),
+    sort_candidates(Candidates0, Candidates).
+
+select_templates(Profile, Templates) :-
+    Stage5 = Profile.get(stage5),
+    Stage5.get(active) == true,
+    !,
+    Priorities = Profile.get(template_priorities),
+    Reconstructed = Stage5.get(reconstructed_candidates),
+    focus_templates(Priorities, Reconstructed, Templates).
+select_templates(Profile, Templates) :-
+    Templates = Profile.get(template_priorities).
+
+focus_templates(Priorities, Reconstructed, Templates) :-
+    first_n(Priorities, 4, Seed),
+    reconstructed_templates(Reconstructed, ReconstructedTemplates),
+    append(ReconstructedTemplates, Seed, Combined),
+    unique_preserve_order(Combined, Templates).
+
+first_n(_, 0, []) :- !.
+first_n([], _, []).
+first_n([X|Xs], N, [X|Taken]) :-
+    N > 0,
+    N1 is N - 1,
+    first_n(Xs, N1, Taken).
+
+reconstructed_templates([], []).
+reconstructed_templates([candidate(Template, _)|Rest], [Template|Templates]) :-
+    reconstructed_templates(Rest, Templates).
+
+unique_preserve_order(List, Unique) :-
+    unique_preserve_order(List, [], Unique).
+
+unique_preserve_order([], Acc, Acc).
+unique_preserve_order([X|Xs], Acc, Unique) :-
+    (   member(X, Acc)
+    ->  unique_preserve_order(Xs, Acc, Unique)
+    ;   append(Acc, [X], Next),
+        unique_preserve_order(Xs, Next, Unique)
     ).
 
 candidate_template(direct, Name, OpGoal, Profile, Score, Code) :-
