@@ -15,6 +15,21 @@ sample_spec(spec(double_all, _{
     classification: code_only
 })).
 
+sample_large_spec(spec(double_all_long, _{
+    name: double_all_long,
+    inputs: [list(number)],
+    outputs: [list(number)],
+    relation: map,
+    operation: double,
+    examples: [io(
+        [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+        [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
+    )],
+    constraints: [deterministic, order_preserved, same_length],
+    warnings: [too_many_examples_or_items],
+    classification: code_only
+})).
+
 test(s2a_induction_profile) :-
     sample_spec(Spec),
     s2a_induce(Spec, Profile),
@@ -54,5 +69,23 @@ test(best_candidate_prefers_recursive_map_solution) :-
     best_candidate(Spec, candidate(recursion, Score, Code)),
     assertion(Score > 0.9),
     sub_string(Code, _, _, _, "double_all(Xs, Ys)").
+
+test(stage5_profile_activates_for_large_examples) :-
+    sample_large_spec(Spec),
+    s2a_induce(Spec, Profile),
+    Stage5 = Profile.stage5,
+    assertion(Stage5.active == true),
+    assertion(Stage5.window_size == 14),
+    assertion(Stage5.manual_class == map),
+    assertion(member(chunked_windows, Stage5.repeated_local_patterns)),
+    assertion(member(operation(double), Stage5.compressed_rules)),
+    assertion(member(candidate(recursion, map_operation(double)), Stage5.reconstructed_candidates)),
+    assertion(Stage5.verified_on_complete_test_set == true).
+
+test(stage5_prioritised_templates_reduce_search_space) :-
+    sample_large_spec(Spec),
+    generate_candidates(Spec, Candidates),
+    findall(T, member(candidate(T, _, _), Candidates), Templates),
+    assertion(Templates == [recursion, map_filter_fold, direct, predicate_reuse]).
 
 :- end_tests(stage4_codegen).
