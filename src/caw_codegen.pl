@@ -5,6 +5,7 @@
 ]).
 
 :- use_module(s2a_bridge).
+:- use_module(starlog).
 
 generate_candidates(Spec, Candidates) :-
     s2a_bridge:s2a_induce(Spec, Profile),
@@ -80,7 +81,9 @@ candidate_template(generator, Name, OpGoal, Profile, Score, Code) :-
     code_generator(Name, OpGoal, Code),
     template_score(generator, Profile, Score).
 candidate_template(starlog_expression, Name, _, Profile, Score, Code) :-
-    code_starlog(Name, Code),
+    Relation = Profile.get(relation),
+    Operation = Profile.get(operation),
+    starlog:emit_from_relation_op(Name, Relation, Operation, Code),
     template_score(starlog_expression, Profile, Score).
 candidate_template(loop2_deterministic, Name, OpGoal, Profile, Score, Code) :-
     code_loop2(Name, OpGoal, Code),
@@ -143,11 +146,6 @@ code_generator(Name, OpGoal, Code) :-
     format(string(Code),
         "~w(Input, Output) :-~n    findall(Y, (member(X, Input), ~w), Output).",
         [Name, OpGoal]).
-
-code_starlog(Name, Code) :-
-    format(string(Code),
-        "~w(Input, Output) :-~n    Output is Input >> map(double).",
-        [Name]).
 
 code_loop2(Name, OpGoal, Code) :-
     format(string(Code),
