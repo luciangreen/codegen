@@ -88,11 +88,6 @@ needs_stage5_upgrade(_, false).
 
 has_large_example_set(Examples) :-
     example_window_size(Limit),
-    length(Examples, Count),
-    Count > Limit,
-    !.
-has_large_example_set(Examples) :-
-    example_window_size(Limit),
     member(io(In, Out), Examples),
     (list_longer_than(In, Limit); list_longer_than(Out, Limit)),
     !.
