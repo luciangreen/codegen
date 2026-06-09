@@ -358,8 +358,12 @@ expand_goals(Name,
         "~w(X, Output) :-~n    Output is ~w.",
         [Name, ArithExpr]).
 
-% Fallback
-expand_goals(Name, _Goals, Code) :-
+% Fallback: unrecognised goal structure — emit identity and warn
+expand_goals(Name, Goals, Code) :-
+    format(atom(Warning),
+        "starlog: unrecognised goal structure for ~w: ~w",
+        [Name, Goals]),
+    print_message(warning, format(Warning, [])),
     format(string(Code),
         "~w(Input, Output) :-~n    Output = Input.",
         [Name]).

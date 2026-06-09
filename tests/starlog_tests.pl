@@ -264,3 +264,4 @@ test(emit_from_relation_op_filter) :-
     sub_string(Code, _, _, _, "filter(positive)").
 
 :- end_tests(stage6_starlog).
+
