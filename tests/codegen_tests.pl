@@ -61,11 +61,13 @@ test(generates_empty_list_test) :-
 test(generates_single_item_todo) :-
     double_all_spec(Spec),
     generate_tests(Spec, Tests),
-    assertion(member(test_todo(single_item, double_all, _, _), Tests)).
+    % Single item uses type-appropriate placeholder (1 for list(number))
+    assertion(member(test_todo(single_item, double_all, [1], _), Tests)).
 
 test(generates_duplicate_inputs_test) :-
     double_all_spec(Spec),
     generate_tests(Spec, Tests),
+    % Expected output is left as _ since it depends on the generated predicate's behaviour
     assertion(member(test(duplicate_inputs, double_all, [1,1], _, duplicate), Tests)).
 
 test(generates_mixed_type_rejection) :-

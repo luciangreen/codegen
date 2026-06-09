@@ -36,7 +36,7 @@ generate_example_tests(Name, Examples, Tests) :-
 
 generate_example_tests_([], _, _, []).
 generate_example_tests_([io(Input, Output)|Rest], Name, N, [test(TN, Name, Input, Output, example)|Tests]) :-
-    atom_concat(example_, N, TN),
+    atomic_list_concat([example_, N], TN),
     N1 is N + 1,
     generate_example_tests_(Rest, Name, N1, Tests).
 
@@ -51,11 +51,13 @@ edge_case_test(Name, Inputs, Relation, _Constraints,
     has_list_input(Inputs),
     empty_output_for_relation(Relation, EmptyOut).
 
-% 2. Single item list - expected output not derived; mark as todo
+% 2. Single item list - expected output not derived; mark as todo.
+%    Use a type-appropriate single item based on input type.
 edge_case_test(Name, Inputs, _Relation, _Constraints,
-               test_todo(single_item, Name, [single_item_placeholder],
+               test_todo(single_item, Name, [Item],
                          single_item_expected_output_not_derived)) :-
-    has_list_input(Inputs).
+    has_list_input(Inputs),
+    single_item_for_inputs(Inputs, Item).
 
 % 3. More than 14 items - skip if already flagged in constraints/warnings
 edge_case_test(_Name, _Inputs, _Relation, Constraints,
@@ -113,6 +115,13 @@ has_number_list_input(Inputs) :-
 
 has_atom_list_input(Inputs) :-
     member(list(atom), Inputs), !.
+
+% single_item_for_inputs(+Inputs, -Item) chooses a type-appropriate item.
+single_item_for_inputs(Inputs, 1)    :- member(list(number), Inputs), !.
+single_item_for_inputs(Inputs, a)    :- member(list(atom), Inputs), !.
+single_item_for_inputs(Inputs, "x")  :- member(list(string), Inputs), !.
+single_item_for_inputs(Inputs, [])   :- member(list(list(_)), Inputs), !.
+single_item_for_inputs(_, item).
 
 empty_output_for_relation(map, []) :- !.
 empty_output_for_relation(filter, []) :- !.

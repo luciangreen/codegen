@@ -9,7 +9,7 @@ test(empty) :-
     double_all([], R),
     assertion(R == []).
 test(single_item, [todo(single_item_expected_output_not_derived)]) :-
-    double_all([single_item_placeholder], _).
+    double_all([1], _).
 test(duplicate_inputs) :-
     double_all([1,1], _).
 test(mixed_type_rejection, [fail]) :-
