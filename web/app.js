@@ -17,7 +17,7 @@ function classifyIntent(text) {
   if (/optim|findall/.test(t))                  return 'optimise_code';
   if (/merge/.test(t))                          return 'merge_predicates';
   if (/explain/.test(t))                        return 'explain_code';
-  if (/starlog|>>|\bis\b/.test(t))              return 'convert_starlog';
+  if (/starlog|>>/.test(t))                    return 'convert_starlog';
   if (/deterministic|loop/.test(t))             return 'convert_loop';
   if (/invariant/.test(t))                      return 'find_invariant';
   if (/repair/.test(t))                         return 'repair_tests';
@@ -28,7 +28,7 @@ function classifyIntent(text) {
 function parseSpecBrowser(sentence) {
   const s = sentence.toLowerCase();
   const nameMatch = s.match(/predicate\s+([a-z_][a-z0-9_]*)\s*\(/);
-  const name = nameMatch ? nameMatch[1] : 'unknown_predicate';
+  const predicateName = nameMatch ? nameMatch[1] : 'unknown_predicate';
   const relation =
     /\bmap\b/.test(s)    ? 'map'    :
     /\bfilter\b/.test(s) ? 'filter' :
@@ -49,7 +49,7 @@ function parseSpecBrowser(sentence) {
   }
 
   return {
-    name,
+    name: predicateName,
     relation,
     operation,
     examples,

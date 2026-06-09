@@ -28,7 +28,7 @@ classify_intent(Text, merge_predicates) :-
 classify_intent(Text, explain_code) :-
     sub_string(Text, _, _, _, "explain"), !.
 classify_intent(Text, convert_starlog) :-
-    (sub_string(Text, _, _, _, "starlog"); sub_string(Text, _, _, _, ">>"); sub_string(Text, _, _, _, "is ")), !.
+    (sub_string(Text, _, _, _, "starlog"); sub_string(Text, _, _, _, ">>")), !.
 classify_intent(Text, convert_loop) :-
     (sub_string(Text, _, _, _, "deterministic"); sub_string(Text, _, _, _, "loop")), !.
 classify_intent(Text, find_invariant) :-
