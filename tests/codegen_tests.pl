@@ -1,4 +1,4 @@
-:- begin_tests(stage4_codegen).
+:- begin_tests(codegen).
 
 :- use_module('../src/s2a_bridge').
 :- use_module('../src/caw_codegen').
@@ -92,4 +92,4 @@ test(stage5_prioritised_templates_reduce_search_space) :-
     assertion(length(Templates, N)),
     assertion(N =< 4).
 
-:- end_tests(stage4_codegen).
+:- end_tests(codegen).
