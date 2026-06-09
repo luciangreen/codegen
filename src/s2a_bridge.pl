@@ -77,7 +77,7 @@ build_stage5_profile(Relation, Operation, Examples, Constraints, Stage5) :-
         manual_class: ManualClass,
         compressed_rules: CompressedRules,
         reconstructed_candidates: VerifiedCandidates,
-        verified_on_complete_test_set: true,
+        verified_on_complete_examples: true,
         template_priorities: Stage5Priorities
     }.
 
@@ -196,11 +196,6 @@ consistent_operation(Operation, [Example|Rest]) :-
     example_matches_operation(Operation, Example),
     consistent_operation(Operation, Rest).
 
-example_matches_operation(_, io(In, Out)) :-
-    \+ is_list(In),
-    \+ is_list(Out),
-    In = Out,
-    !.
 example_matches_operation(double, io(In, Out)) :- maplist(double_of, In, Out).
 example_matches_operation(triple, io(In, Out)) :- maplist(triple_of, In, Out).
 example_matches_operation(square, io(In, Out)) :- maplist(square_of, In, Out).
