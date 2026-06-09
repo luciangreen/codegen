@@ -3,7 +3,7 @@
 This repository follows the staged requirements described in `pr1.txt`.
 
 Current implementation target:
-- Stage 1: Repository setup scaffold (directories and files for `src/`, `web/`, `examples/`, and `tests/`).
+- Stage 2: Sentence specs to dictionary data.
 
 Planned stages:
-- Stage 2 through Stage 12 as defined in `pr1.txt`.
+- Stage 3 through Stage 12 as defined in `pr1.txt`.
