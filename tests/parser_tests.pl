@@ -70,4 +70,16 @@ test(dictionary_bridge_many) :-
     sentences_to_dictionary(Sentences, Specs),
     assertion(length(Specs, 2)).
 
+% Edge case 2: missing output type generates a warning
+test(missing_output_type_warning) :-
+    Sentence = 'Generate a predicate foo(Input, Output) that converts a number.',
+    sentence_to_spec(Sentence, spec(foo, Dict)),
+    assertion(member(missing_output_type, Dict.warnings)).
+
+% Edge case 8: code-only spec (no mention of tests) classified as code_only
+test(code_only_classification) :-
+    Sentence = 'Generate a predicate reverse_list(Input, Output) that maps every number in Input to twice its value.',
+    sentence_to_spec(Sentence, spec(reverse_list, Dict)),
+    assertion(Dict.classification == code_only).
+
 :- end_tests(stage2_parser).

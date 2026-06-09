@@ -2,8 +2,12 @@
 
 This repository follows the staged requirements described in `pr1.txt`.
 
-Current implementation target:
-- Stage 2: Sentence specs to dictionary data.
+## Completion summary
 
-Planned stages:
-- Stage 3 through Stage 12 as defined in `pr1.txt`.
+- **Stage 1** – Repository Setup: **100%**
+- **Stage 2** – Sentence Specs to Dictionary Data: **100%**
+- **Stage 3** – Dictionary Data to Tests: **100%**
+- **Stage 4–12** – Planned; not yet implemented.
+
+See `README.md` for detailed per-stage status.
+
