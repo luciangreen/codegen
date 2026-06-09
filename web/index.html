@@ -9,73 +9,87 @@
 <body>
   <header>
     <h1>Lucian Codegen</h1>
-    <p class="subtitle">Symbolic code-generation from precise English sentence specs</p>
+    <p class="subtitle">Sentence specs → Dictionary → Tests → Prolog → Starlog → Optimised code</p>
   </header>
 
-  <main>
+  <main class="grid">
+
     <!-- Panel 1: Sentence spec input -->
-    <section class="panel" id="panel-spec">
+    <section id="panel-spec" class="panel">
       <h2>1. Sentence Spec</h2>
-      <textarea id="sentence-spec" rows="4"
-        placeholder="Generate a predicate double_all(Input, Output) that maps every number in Input to twice its value. Examples: [1,2,3] -> [2,4,6]."></textarea>
+      <textarea id="spec-input" rows="5" placeholder="Generate a predicate double_all(Input, Output) that maps every number in Input to twice its value. Examples: [1,2,3] -> [2,4,6]."></textarea>
       <button id="btn-parse">Parse Spec</button>
     </section>
 
-    <!-- Panel 2: Dictionary data preview -->
-    <section class="panel" id="panel-dict">
+    <!-- Panel 2: Dictionary-data preview -->
+    <section id="panel-dict" class="panel">
       <h2>2. Dictionary Data</h2>
-      <pre id="output-dict" class="code-output">(not yet generated)</pre>
+      <pre id="dict-output" class="code-block">-- awaiting parse --</pre>
     </section>
 
     <!-- Panel 3: Generated tests preview -->
-    <section class="panel" id="panel-tests">
+    <section id="panel-tests" class="panel">
       <h2>3. Generated Tests</h2>
-      <pre id="output-tests" class="code-output">(not yet generated)</pre>
+      <pre id="tests-output" class="code-block">-- awaiting generation --</pre>
+      <button id="btn-gen-tests" disabled>Generate Tests</button>
     </section>
 
     <!-- Panel 4: Generated Prolog preview -->
-    <section class="panel" id="panel-prolog">
+    <section id="panel-prolog" class="panel">
       <h2>4. Generated Prolog</h2>
-      <pre id="output-prolog" class="code-output">(not yet generated)</pre>
+      <pre id="prolog-output" class="code-block">-- awaiting generation --</pre>
+      <button id="btn-gen-prolog" disabled>Generate Prolog</button>
     </section>
 
     <!-- Panel 5: Generated Starlog preview -->
-    <section class="panel" id="panel-starlog">
-      <h2>5. Generated Starlog</h2>
-      <pre id="output-starlog" class="code-output">(not yet generated)</pre>
+    <section id="panel-starlog" class="panel">
+      <h2>5. Starlog Form</h2>
+      <pre id="starlog-output" class="code-block">-- awaiting generation --</pre>
+      <button id="btn-gen-starlog" disabled>Emit Starlog</button>
     </section>
 
     <!-- Panel 6: Optimised code preview -->
-    <section class="panel" id="panel-optimised">
+    <section id="panel-optimised" class="panel">
       <h2>6. Optimised Code</h2>
-      <pre id="output-optimised" class="code-output">(not yet generated)</pre>
+      <pre id="optimised-output" class="code-block">-- awaiting optimisation --</pre>
+      <button id="btn-optimise" disabled>Optimise</button>
     </section>
 
     <!-- Panel 7: Test result panel -->
-    <section class="panel" id="panel-results">
+    <section id="panel-results" class="panel">
       <h2>7. Test Results</h2>
-      <pre id="output-results" class="code-output">(no tests run)</pre>
+      <div id="results-output" class="results-block">
+        <span class="placeholder">-- no test run yet --</span>
+      </div>
+      <button id="btn-run-tests" disabled>Run Tests</button>
     </section>
 
     <!-- Panel 8: Failure explanation panel -->
-    <section class="panel" id="panel-failure">
+    <section id="panel-explain" class="panel">
       <h2>8. Failure Explanation</h2>
-      <pre id="output-failure" class="code-output">(no failures)</pre>
+      <pre id="explain-output" class="code-block">-- no failures --</pre>
     </section>
 
     <!-- Panel 9: Predicate merge suggestions -->
-    <section class="panel" id="panel-merge">
+    <section id="panel-merge" class="panel">
       <h2>9. Merge Suggestions</h2>
-      <pre id="output-merge" class="code-output">(none)</pre>
+      <div id="merge-output" class="results-block">
+        <span class="placeholder">-- no suggestions --</span>
+      </div>
+      <button id="btn-detect-merge" disabled>Detect Merges</button>
     </section>
 
-    <!-- Panel 10: Chatbot command panel -->
-    <section class="panel" id="panel-chatbot">
-      <h2>10. Chatbot</h2>
-      <input id="chatbot-input" type="text" placeholder="e.g. Generate a predicate from these examples." />
-      <button id="btn-chat">Send</button>
-      <pre id="output-chat" class="code-output">(awaiting command)</pre>
+    <!-- Panel 10: Chatbot-style command panel -->
+    <section id="panel-chat" class="panel panel-wide">
+      <h2>10. Chatbot Commands</h2>
+      <div id="chat-history" class="chat-history"></div>
+      <div class="chat-input-row">
+        <input id="chat-input" type="text" placeholder="e.g. Generate a predicate from these examples." />
+        <button id="btn-chat-send">Send</button>
+      </div>
+      <div id="chat-intent" class="intent-label"></div>
     </section>
+
   </main>
 
   <script src="app.js"></script>

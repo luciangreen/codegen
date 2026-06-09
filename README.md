@@ -3,21 +3,19 @@ Integrates code generation and Dev-Ops with optimisation.
 
 ## Current status
 
-| Stage | Description | Completion |
-|-------|-------------|------------|
-| 1 | Repository Setup | **100%** |
-| 2 | Sentence Specs to Dictionary Data | **100%** |
-| 3 | Dictionary Data to Tests | **100%** |
-| 4–12 | (planned) | 0% |
+- Stage 1 complete: repository scaffold.
+- Stage 2 complete: sentence specs to dictionary data (`src/parser.pl`, `src/dictionary.pl`, `tests/parser_tests.pl`).
+- Stage 3 complete: dictionary data to tests (`src/testgen.pl`, `tests/codegen_tests.pl`).
+- Stage 4 complete: S2A + CAW code generation candidate pipeline (`src/s2a_bridge.pl`, `src/caw_codegen.pl`, `tests/codegen_tests.pl`).
+- Stage 5 complete: greater-than-14-item S2A upgrade with windowing, manual classification, rule compression, and prioritised CAW search (`src/s2a_bridge.pl`, `src/caw_codegen.pl`, `tests/codegen_tests.pl`).
+- Stage 6 complete: Starlog expression generation (`src/starlog.pl`, `src/caw_codegen.pl`, `tests/codegen_tests.pl`).
+- Stage 7 complete: Loop2 optimisation (`src/optimiser.pl`, `tests/codegen_tests.pl`).
+- Stage 9 complete: Predicate merging (`src/predicate_merge.pl`, `tests/codegen_tests.pl`).
+- Stage 11 complete: Web interface (`web/index.html`, `web/app.js`, `web/style.css`).
+- Stage 12 complete: Manual chatbot adapter (`src/chatbot_adapter.pl`, `tests/codegen_tests.pl`).
 
-### Stage 1 – Repository Setup (100%)
-All required files and directories are present:
-- `src/` – `parser.pl`, `dictionary.pl`, `testgen.pl`, and stubs for `s2a_bridge.pl`, `caw_codegen.pl`, `optimiser.pl`, `predicate_merge.pl`, `cicd_agent.pl`, `chatbot_adapter.pl`
-- `web/` – `index.html`, `app.js`, `style.css` (full 10-panel UI scaffold + JS intent classifier)
-- `examples/` – `sentence_specs.pl` (14 edge-case sentences), `dictionary_specs.pl`, `generated_tests.pl`, `generated_code.pl`
-- `tests/` – `parser_tests.pl`, `codegen_tests.pl`, stubs for `optimisation_tests.pl`, `merge_tests.pl`, `cicd_tests.pl`
+## Stage 2 – Edge cases handled
 
-### Stage 2 – Sentence Specs to Dictionary Data (100%)
 `src/parser.pl` and `src/dictionary.pl` handle all 14 specified edge cases:
 1. Missing input type → `missing_input_type` warning
 2. Missing output type → `missing_output_type` warning
@@ -34,17 +32,9 @@ All required files and directories are present:
 13. Predicate merging → `predicate_merge` constraint
 14. Change previous tests → `test_repair` constraint
 
-### Stage 3 – Dictionary Data to Tests (100%)
-`src/testgen.pl` generates plunit test blocks from specs, covering all 10 edge cases.
-See `examples/generated_tests.pl` for example output.
-
 ## Run tests
 
 ```sh
-# Stage 2 (parser + dictionary) – 13 tests
-swipl -g "load_test_files([]), run_tests(stage2_parser), halt" tests/parser_tests.pl
-
-# Stage 3 (test generator) – 21 tests
-swipl -g "load_test_files([]), run_tests(stage3_testgen), halt" tests/codegen_tests.pl
+swipl -q -f none -g "load_files('tests/parser_tests.pl', [if(not_loaded)]), run_tests, halt."
+swipl -q -f none -g "load_files('tests/codegen_tests.pl', [if(not_loaded)]), run_tests, halt."
 ```
-
