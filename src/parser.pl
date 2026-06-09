@@ -9,6 +9,8 @@
 :- use_module(library(pcre)).
 :- use_module(library(apply)).
 
+example_limit(14).
+
 sentence_to_spec(Sentence, Spec) :-
     sentence_to_spec(Sentence, [], Spec).
 
@@ -58,10 +60,10 @@ extract_signature(Text, Name, InputVars, OutputVars) :-
 
 split_args(ArgsText, Args) :-
     split_string(ArgsText, ",", " \t\n", Raw),
-    exclude(string_empty, Raw, Filtered),
+    exclude(is_empty_string, Raw, Filtered),
     maplist(atom_string, Args, Filtered).
 
-string_empty("").
+is_empty_string("").
 
 split_io_vars([], [], []).
 split_io_vars([Only], [Only], []).
@@ -248,14 +250,16 @@ add_large_example_warning(Examples, Warnings0, Warnings) :-
     (has_large_example_set(Examples) -> sort([too_many_examples_or_items|Warnings0], Warnings) ; Warnings = Warnings0).
 
 has_large_example_set(Examples) :-
+    example_limit(Limit),
     length(Examples, N),
-    N > 14, !.
+    N > Limit, !.
 has_large_example_set(Examples) :-
     member(io(In, Out), Examples),
     (is_long_list(In); is_long_list(Out)),
     !.
 
 is_long_list(List) :-
+    example_limit(Limit),
     is_list(List),
     length(List, N),
-    N > 14.
+    N > Limit.
