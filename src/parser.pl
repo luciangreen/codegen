@@ -218,14 +218,23 @@ parse_examples(Text, Examples) :-
 
 parse_arrow_example(Part, io(Input, Output)) :-
     sub_string(Part, _, _, _, "->"),
-    split_string(Part, ">", " \t\n", [LeftRaw, RightRaw|_]),
+    split_on_arrow(Part, LeftRaw, RightRaw),
     normalize_arrow_left(LeftRaw, Left),
     normalize_arrow_right(RightRaw, Right),
     safe_term(Left, Input),
     safe_term(Right, Output), !.
+
+split_on_arrow(Text, Left, Right) :-
+    sub_string(Text, Before, 2, After, "->"),
+    sub_string(Text, 0, Before, _, Left0),
+    RightStart is Before + 2,
+    sub_string(Text, RightStart, After, 0, Right0),
+    trim_string(Left0, Left),
+    trim_string(Right0, Right).
+
 normalize_arrow_left(Text, Clean) :-
-    split_string(Text, "-", " \t\n", [A|_]),
-    strip_prefix("examples:", A, Clean0),
+    trim_string(Text, Text0),
+    strip_prefix("examples:", Text0, Clean0),
     strip_prefix("example:", Clean0, Clean).
 
 normalize_arrow_right(Text, Clean) :-
