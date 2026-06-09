@@ -102,9 +102,10 @@ classify_intent(Tokens, debug_failure) :-
 
 %% optimise_code: mentions optimise/optimize/speed
 classify_intent(Tokens, optimise_code) :-
-    (member(optimise, Tokens) ; member(optimize, Tokens) ; member(optimisation, Tokens)
-    ; member(optimisation, Tokens) ; member('speed up', Tokens) ; member(cache, Tokens)
-    ; member(memoize, Tokens) ; member(memoise, Tokens)),
+    (member(optimise, Tokens) ; member(optimize, Tokens)
+    ; member(optimisation, Tokens) ; member(optimization, Tokens)
+    ; (member(speed, Tokens), member(up, Tokens))
+    ; member(cache, Tokens) ; member(memoize, Tokens) ; member(memoise, Tokens)),
     !.
 
 %% merge_predicates: mentions merge/combine + predicate/predicates
