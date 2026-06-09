@@ -1,0 +1,396 @@
+Here is a GitHub-agent-ready requirements draft.
+
+Multistage GitHub Agent Program Requirements: Lucian Codegen
+
+Goal
+
+Build lucian-codegen, a Prolog/JavaScript code-generation system that converts precise natural-language sentence specifications into dictionary data, tests, Prolog predicates, Starlog-style readable code, and optimised deterministic code.
+
+The system shall integrate ideas from:
+
+* Starlog: readable value-returning Prolog syntax, nested expressions, method chains, variable-bound goals, list/string/atom operators, and expansion into normal Prolog. Starlog already supports Result is function(Args), : string concatenation, & list append, nested functions, and >> method chains.
+* PLOP: memoisation, indexical optimisation, subterm-with-address, subterm-index looping, and Gaussian-style optimisation of Prolog.
+* Loop2: conversion of supported findall/3, member/2, simple generators, nested findall, and spliced nondeterministic predicates into explicit deterministic recursive loops. Loop2 deliberately targets inspectable deterministic output rather than full Prolog backtracking preservation.
+
+Stage 1: Repository Setup
+
+Create a repository with this structure:
+
+lucian-codegen/
+  README.md
+  Requirements.md
+  src/
+    parser.pl
+    dictionary.pl
+    s2a_bridge.pl
+    caw_codegen.pl
+    testgen.pl
+    optimiser.pl
+    predicate_merge.pl
+    cicd_agent.pl
+    chatbot_adapter.pl
+  web/
+    index.html
+    app.js
+    style.css
+  examples/
+    sentence_specs.pl
+    dictionary_specs.pl
+    generated_tests.pl
+    generated_code.pl
+  tests/
+    parser_tests.pl
+    codegen_tests.pl
+    optimisation_tests.pl
+    merge_tests.pl
+    cicd_tests.pl
+
+Stage 2: Sentence Specs to Dictionary Data
+
+The system shall parse precise natural language into dictionary facts.
+
+Example:
+
+Generate a predicate double_all(Input, Output) that maps every number in Input to twice its value.
+
+Becomes:
+
+spec(double_all, _{
+  name: double_all,
+  inputs: [list(number)],
+  outputs: [list(number)],
+  relation: map,
+  operation: double,
+  examples: [
+    io([1,2,3], [2,4,6])
+  ],
+  constraints: [same_length, order_preserved, deterministic]
+}).
+
+Main edge cases:
+
+1. Missing input type.
+2. Missing output type.
+3. Multiple outputs.
+4. Nested structures.
+5. Strings, atoms, chars, lists, numbers, dicts.
+6. Ambiguous verbs such as “change”, “make”, “find”.
+7. Specs that describe tests but not code.
+8. Specs that describe code but not tests.
+9. Specs with contradictory examples.
+10. Specs with more than 14 examples/items.
+11. Specs that require recursion.
+12. Specs that require generator search.
+13. Specs that require predicate merging.
+14. Specs that change previous tests.
+
+Stage 3: Dictionary Data to Tests
+
+The test generator shall create Prolog unit tests from dictionary specs.
+
+Required outputs:
+
+:- begin_tests(double_all).
+test(example_1) :-
+    double_all([1,2,3], R),
+    assertion(R == [2,4,6]).
+test(empty) :-
+    double_all([], R),
+    assertion(R == []).
+:- end_tests(double_all).
+
+Edge cases:
+
+1. Empty lists.
+2. Single item lists.
+3. More than 14 items.
+4. Duplicate inputs.
+5. Nested lists.
+6. Mixed type rejection.
+7. Variables in input.
+8. Ground and non-ground cases.
+9. Deterministic single-success expectation.
+10. Unsupported nondeterministic behaviour marked explicitly.
+
+Stage 4: S2A + CAW Code Generation
+
+The code generator shall use S2A-style example induction and CAW-style combination search.
+
+It shall generate candidate predicates from:
+
+1. Direct templates.
+2. Recursion templates.
+3. Map/filter/fold templates.
+4. Generator templates.
+5. Starlog expression templates.
+6. Loop2 deterministic loop templates.
+7. PLOP optimisation templates.
+8. Existing predicate reuse.
+9. Predicate merging.
+
+Example generated code:
+
+double_all([], []).
+double_all([X|Xs], [Y|Ys]) :-
+    Y is X * 2,
+    double_all(Xs, Ys).
+
+Stage 5: Greater-Than-14-Item S2A Upgrade
+
+S2A shall be modified so it does not fail or explode when examples contain more than 14 items.
+
+Required strategies:
+
+1. Chunk examples into windows.
+2. Detect repeated local patterns.
+3. Infer map/filter/fold/recursion before exhaustive search.
+4. Use manual-neuronet classification before CAW search.
+5. Compress examples into symbolic rules.
+6. Reconstruct the full algorithm from compressed rule candidates.
+7. Verify against the complete test set.
+
+Manual-neuronet classifier categories:
+
+pattern_class(map).
+pattern_class(filter).
+pattern_class(fold).
+pattern_class(grammar).
+pattern_class(decision_tree).
+pattern_class(recursion).
+pattern_class(generator).
+pattern_class(predicate_merge).
+pattern_class(test_repair).
+pattern_class(loop_conversion).
+pattern_class(subterm_indexing).
+
+Stage 6: Starlog Integration
+
+The system shall optionally emit Starlog-readable code before expanding to Prolog.
+
+Starlog-style output:
+
+double_all(Input, Output) :-
+    Output is Input >> map(double).
+
+Then expand into normal Prolog.
+
+Must support:
+
+1. Result is function(Args).
+2. String concatenation using :.
+3. List append using &.
+4. Nested RHS expressions.
+5. Nested LHS expressions.
+6. Method chains using >>.
+7. Variable-bound Starlog goals.
+8. Selective eval and no_eval.
+9. Arithmetic preservation.
+10. User-defined value-returning predicates.
+
+Stage 7: Loop2 Optimisation
+
+The system shall convert supported nondeterministic code into deterministic recursive loops.
+
+Input:
+
+p(R) :-
+    findall([X,X], member(X, [a,b,c]), R).
+
+Output:
+
+p(R) :-
+    loop001([a,b,c], R).
+loop001([], []).
+loop001([X|Xs], [[X,X]|Ys]) :-
+    loop001(Xs, Ys).
+
+Must support:
+
+1. findall/3 over facts.
+2. findall/3 over member/2.
+3. Simple transformations inside findall.
+4. Nested findall.
+5. Flattening nested findall + member.
+6. Splicing simple nested predicates.
+7. Converting fact generators into list generators.
+8. Explicit recursive loops.
+9. Unsupported constructs reported rather than silently miscompiled.
+
+Unsupported or warning cases:
+
+1. Cut !.
+2. Negation-as-failure.
+3. Dynamic predicates.
+4. Side effects.
+5. Infinite generators.
+6. Non-ground generators.
+7. Full backtracking dependence.
+8. Meta-call.
+9. Assert/retract.
+10. I/O inside generator.
+
+Stage 8: PLOP Optimisation
+
+The optimiser shall improve generated Prolog using:
+
+1. Memoisation.
+2. Indexical optimisation.
+3. Subterm-with-address.
+4. Subterm-index looping.
+5. Gaussian-style reconstruction.
+6. Repeated subpredicate elimination.
+7. Expensive predicate caching.
+8. Template splicing.
+9. Predicate dependency analysis.
+10. Invariant extraction.
+
+Example target:
+
+matrix_output(A,B) :-
+    subterm_with_address(A,[1],[C,D]),
+    subterm_with_address(A,[2,1],F),
+    B=[[C,D],F].
+
+Stage 9: Predicate Merging
+
+The agent shall detect when predicates should be merged.
+
+Merge candidates include:
+
+1. Same input/output examples.
+2. Same recursive shape.
+3. Same invariant.
+4. Same generator source.
+5. Same output template.
+6. One predicate is a special case of another.
+7. One predicate is a renamed duplicate.
+8. One predicate differs only by constants.
+9. One predicate can be parameterised.
+10. Two predicates share expensive subcalls.
+
+Example:
+
+double_all(Xs, Ys).
+triple_all(Xs, Ys).
+
+May become:
+
+multiply_all(_, [], []).
+multiply_all(N, [X|Xs], [Y|Ys]) :-
+    Y is X * N,
+    multiply_all(N, Xs, Ys).
+double_all(Xs, Ys) :- multiply_all(2, Xs, Ys).
+triple_all(Xs, Ys) :- multiply_all(3, Xs, Ys).
+
+Stage 10: Lucian CI/CD Agent Loop
+
+The GitHub agent shall run this loop:
+
+1. Read changed sentence specs.
+2. Convert specs to dictionary data.
+3. Generate or update tests.
+4. Generate candidate code.
+5. Run tests.
+6. If tests fail, diagnose failure logically.
+7. Modify code, tests, or specs depending on cause.
+8. Optimise code.
+9. Merge predicates where safe.
+10. Re-run tests.
+11. Produce explanation and commit summary.
+
+Failure diagnosis categories:
+
+1. Spec parse error.
+2. Missing type.
+3. Missing example.
+4. Contradictory example.
+5. Code generation failure.
+6. Test generation failure.
+7. Predicate arity mismatch.
+8. Incorrect recursion base case.
+9. Incorrect recursive step.
+10. Wrong output order.
+11. Missing deterministic constraint.
+12. Unsupported nondeterminism.
+13. Optimisation changed semantics.
+14. Predicate merge unsafe.
+15. Timeout.
+16. Infinite recursion.
+
+Stage 11: Web Interface
+
+The web interface shall include:
+
+1. Sentence spec input.
+2. Dictionary-data preview.
+3. Generated tests preview.
+4. Generated Prolog preview.
+5. Generated Starlog preview.
+6. Optimised code preview.
+7. Test result panel.
+8. Failure explanation panel.
+9. Predicate merge suggestions.
+10. Chatbot-style command panel.
+
+Stage 12: Future Manual Chatbot Upgrade
+
+The architecture shall reserve a manual chatbot layer.
+
+The chatbot shall not merely call an LLM. It shall use manual-neuronet rules, dictionary data, and logical command routing.
+
+Future commands:
+
+Generate a predicate from these examples.
+Explain why this test failed.
+Merge these predicates.
+Optimise this findall.
+Convert this Starlog to Prolog.
+Make this code deterministic.
+Find repeated expensive subpredicates.
+Add edge-case tests.
+Repair the recursive case.
+Show the invariant.
+
+Chatbot internal route:
+
+chat_command(Text, Intent, Data) :-
+    parse_sentence(Text, Tokens),
+    classify_intent(Tokens, Intent),
+    extract_dictionary_data(Tokens, Data).
+
+Required chatbot intents:
+
+intent(generate_code).
+intent(generate_tests).
+intent(debug_failure).
+intent(optimise_code).
+intent(merge_predicates).
+intent(explain_code).
+intent(convert_starlog).
+intent(convert_loop).
+intent(find_invariant).
+intent(repair_tests).
+
+Acceptance Tests
+
+The project is complete when:
+
+1. A sentence spec can generate dictionary data.
+2. Dictionary data can generate tests.
+3. Tests can generate candidate code.
+4. Candidate code passes generated tests.
+5. More-than-14-item examples are handled.
+6. Starlog-style code can be emitted and expanded.
+7. Supported findall/3 patterns become deterministic loops.
+8. PLOP-style optimisation is applied safely.
+9. Equivalent predicates are suggested for merging.
+10. Unsafe merges are rejected.
+11. Failed tests produce logical explanations.
+12. The web interface demonstrates the whole pipeline.
+13. The chatbot adapter can classify commands even before full chatbot implementation.
+
+Final Target
+
+lucian-codegen shall become a symbolic code-generation CI/CD system where precise English, examples, tests, Prolog, Starlog, Loop2, PLOP, S2A, CAW, and manual-neuronet rules work together to generate, test, optimise, merge, debug, and explain code.
+
+I based the integration points on the current repo descriptions: Starlog’s value-returning syntax, nested expressions, method chains, and expansion behaviour; PLOP’s memoisation/index/subterm/Gaussian optimisation focus; and Loop2’s findall/3 to deterministic loop conversion with flattening and splicing.  
