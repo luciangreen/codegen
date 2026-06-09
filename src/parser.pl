@@ -15,8 +15,7 @@ sentence_to_spec(Sentence, Spec) :-
     sentence_to_spec(Sentence, [], Spec).
 
 sentence_to_spec(Sentence, _Options, spec(Name, Dict)) :-
-    must_be(atom, Sentence),
-    downcase_atom(Sentence, Lower),
+    normalize_sentence_text(Sentence, Lower),
     extract_signature(Lower, Name, InputVars, OutputVars),
     detect_relation(Lower, Relation),
     detect_operation(Lower, Operation),
@@ -24,7 +23,7 @@ sentence_to_spec(Sentence, _Options, spec(Name, Dict)) :-
     parse_examples(Lower, Examples),
     detect_constraints(Lower, Relation, Constraints0),
     classify_sentence(Lower, Classification),
-    collect_warnings(Lower, Inputs, Outputs, OutputVars, Examples, Warnings0),
+    collect_warnings(Classification, Lower, Inputs, Outputs, OutputVars, Examples, Warnings0),
     add_contradiction_warning(Examples, Warnings0, Warnings1),
     add_large_example_warning(Examples, Warnings1, Warnings),
     Dict = _{
@@ -47,6 +46,15 @@ validate_spec(spec(Name, Dict)) :-
     get_dict(outputs, Dict, Outputs),
     is_list(Inputs),
     is_list(Outputs).
+
+normalize_sentence_text(Sentence, Lower) :-
+    (   atom(Sentence)
+    ->  atom_string(Sentence, Text)
+    ;   string(Sentence)
+    ->  Text = Sentence
+    ;   throw(error(type_error(text, Sentence), _))
+    ),
+    string_lower(Text, Lower).
 
 extract_signature(Text, Name, InputVars, OutputVars) :-
     (   re_matchsub("predicate\\s+([a-z_][a-z0-9_]*)\\s*\\(([^)]*)\\)", Text, Dict, [caseless(true)])
@@ -175,26 +183,25 @@ extra_constraint(Text, test_repair) :-
 extra_constraint(Text, nested_structures) :-
     sub_string(Text, _, _, _, "list of lists").
 
-collect_warnings(Text, Inputs, Outputs, OutputVars, Examples, Warnings) :-
-    findall(W, base_warning(Text, Inputs, Outputs, OutputVars, Examples, W), Warnings0),
+collect_warnings(Classification, Text, Inputs, Outputs, OutputVars, Examples, Warnings) :-
+    findall(W, base_warning(Classification, Text, Inputs, Outputs, OutputVars, Examples, W), Warnings0),
     sort(Warnings0, Warnings).
 
-base_warning(_, Inputs, _, _, _, missing_input_type) :-
+base_warning(_, _, Inputs, _, _, _, missing_input_type) :-
     member(unknown(input_type_missing), Inputs).
-base_warning(_, _, Outputs, _, _, missing_output_type) :-
+base_warning(_, _, _, Outputs, _, _, missing_output_type) :-
     member(unknown(output_type_missing), Outputs).
-base_warning(_, _, _, OutputVars, _, multiple_outputs) :-
+base_warning(_, _, _, _, OutputVars, _, multiple_outputs) :-
     length(OutputVars, N),
     N > 1.
-base_warning(Text, _, _, _, _, ambiguous_verb(change)) :-
+base_warning(_, Text, _, _, _, _, ambiguous_verb(change)) :-
     sub_string(Text, _, _, _, "change").
-base_warning(Text, _, _, _, _, ambiguous_verb(make)) :-
+base_warning(_, Text, _, _, _, _, ambiguous_verb(make)) :-
     sub_string(Text, _, _, _, "make").
-base_warning(Text, _, _, _, _, ambiguous_verb(find)) :-
+base_warning(_, Text, _, _, _, _, ambiguous_verb(find)) :-
     sub_string(Text, _, _, _, "find").
-base_warning(Text, _, _, _, _, tests_without_code) :-
-    classify_sentence(Text, tests_only).
-base_warning(_, _, _, _, Examples, no_examples) :-
+base_warning(tests_only, _, _, _, _, _, tests_without_code).
+base_warning(_, _, _, _, _, Examples, no_examples) :-
     Examples == [].
 
 classify_sentence(Text, tests_only) :-
@@ -243,7 +250,7 @@ add_contradiction_warning(Examples, Warnings0, Warnings) :-
 has_contradiction(Examples) :-
     member(io(Input, Out1), Examples),
     member(io(Input, Out2), Examples),
-    Out1 \= Out2,
+    Out1 \== Out2,
     !.
 
 add_large_example_warning(Examples, Warnings0, Warnings) :-
