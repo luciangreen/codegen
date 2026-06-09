@@ -1,6 +1,6 @@
 # Requirements
 
-This repository follows the staged requirements described in `/tmp/workspace/luciangreen/codegen/pr1.txt`.
+This repository follows the staged requirements described in `pr1.txt`.
 
 Current implementation target:
 - Stage 1: Repository setup scaffold (directories and files for `src/`, `web/`, `examples/`, and `tests/`).
