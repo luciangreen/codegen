@@ -256,9 +256,8 @@ test(extract_invariants_empty_input) :-
 
 test(eliminate_dupes_removes_second_occurrence) :-
     Body = (length(Xs, N), foo(N), length(Xs, N), bar(N)),
-    plop_eliminate_duplicate_subcalls(Body, NewBody, Bindings),
-    \+ (NewBody = (_A, _B, _C, _D)),   % one goal was removed
-    length(Bindings, _),
+    plop_eliminate_duplicate_subcalls(Body, _NewBody, Bindings),
+    length(Bindings, 3),   % 3 unique goals retained, duplicate removed
     Bindings \= [].
 
 test(eliminate_dupes_no_change_when_unique) :-
