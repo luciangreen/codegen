@@ -186,6 +186,10 @@ extract_operation(Tokens, filter)    :- member(filter, Tokens), !.
 extract_operation(Tokens, increment) :- member(increment, Tokens), !.
 extract_operation(Tokens, decrement) :- member(decrement, Tokens), !.
 extract_operation(Tokens, merge)     :- member(merge, Tokens), !.
+extract_operation(Tokens, double)    :-
+    member(T, Tokens), atom_concat(double, _, T), !.
+extract_operation(Tokens, triple)    :-
+    member(T, Tokens), atom_concat(triple, _, T), !.
 extract_operation(_,       unknown).
 
 extract_relation(Tokens, map)    :- member(map, Tokens), !.

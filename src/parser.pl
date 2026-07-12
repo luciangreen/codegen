@@ -213,8 +213,21 @@ classify_sentence(Text, code_and_tests) :-
 classify_sentence(_, code_only).
 
 parse_examples(Text, Examples) :-
-    split_string(Text, ";", "", Parts),
+    extract_examples_section(Text, Section),
+    split_string(Section, ";", "", Parts),
     findall(Example, (member(Part, Parts), parse_arrow_example(Part, Example)), Examples).
+
+%% extract_examples_section/2 — isolate the examples portion of the sentence.
+%% Looks for "examples:" or "example:" markers and returns the rest.
+%% Falls back to the full text when no marker is present.
+extract_examples_section(Text, Section) :-
+    (   sub_string(Text, Pos, Len, _, "examples:")
+    ;   sub_string(Text, Pos, Len, _, "example:")
+    ),
+    !,
+    Start is Pos + Len,
+    sub_string(Text, Start, _, 0, Section).
+extract_examples_section(Text, Text).
 
 parse_arrow_example(Part, io(Input, Output)) :-
     sub_string(Part, _, _, _, "->"),

@@ -46,17 +46,40 @@ merge_candidates(Specs, Pairs) :-
 %% merge_detect(+Spec1, +Spec2, -Reason)
 %%
 %% Succeeds when two specs have a detectable merge relation.
+%% Clauses are ordered most-specific first so that the primary
+%% actionable reason is returned on the first call.
 %% =========================================================
+
+%% 7. Renamed duplicate (same everything, different name) — most specific
+merge_detect(spec(N1, D1), spec(N2, D2), renamed_duplicate) :-
+    N1 \== N2,
+    D1.get(relation)    == D2.get(relation),
+    D1.get(operation)   == D2.get(operation),
+    D1.get(inputs)      == D2.get(inputs),
+    D1.get(outputs)     == D2.get(outputs),
+    D1.get(constraints) == D2.get(constraints),
+    !.
+
+%% 8. Same structure but differ by operation constant
+merge_detect(spec(_, D1), spec(_, D2), differ_by_constant) :-
+    D1.get(relation) == D2.get(relation),
+    D1.get(inputs)   == D2.get(inputs),
+    D1.get(outputs)  == D2.get(outputs),
+    D1.get(operation) \== D2.get(operation),
+    !.
+
+%% 9. Can be parameterised (differ by numeric multiply operation)
+merge_detect(spec(_, D1), spec(_, D2), can_parameterise) :-
+    D1.get(relation) == map,
+    D2.get(relation) == map,
+    numeric_multiply_op(D1.get(operation)),
+    numeric_multiply_op(D2.get(operation)),
+    D1.get(operation) \== D2.get(operation),
+    !.
 
 %% 1. Same input/output examples
 merge_detect(spec(_, D1), spec(_, D2), same_examples) :-
     D1.get(examples) == D2.get(examples), !.
-
-%% 2. Same recursive shape (same relation)
-merge_detect(spec(_, D1), spec(_, D2), same_recursive_shape) :-
-    D1.get(relation) == D2.get(relation),
-    D1.get(relation) \== transform,
-    !.
 
 %% 3. Same invariant / constraints
 merge_detect(spec(_, D1), spec(_, D2), same_invariant) :-
@@ -82,34 +105,13 @@ merge_detect(spec(_, D1), spec(_, D2), special_case) :-
     D1.get(inputs) == D2.get(inputs),
     !.
 
-%% 8. Same structure but differ by operation constant
-merge_detect(spec(_, D1), spec(_, D2), differ_by_constant) :-
+%% 2. Same recursive shape (same relation) — least specific
+merge_detect(spec(_, D1), spec(_, D2), same_recursive_shape) :-
     D1.get(relation) == D2.get(relation),
-    D1.get(inputs)   == D2.get(inputs),
-    D1.get(outputs)  == D2.get(outputs),
-    D1.get(operation) \== D2.get(operation),
+    D1.get(relation) \== transform,
     !.
 
-%% 7. Renamed duplicate (same everything, different name)
-merge_detect(spec(N1, D1), spec(N2, D2), renamed_duplicate) :-
-    N1 \== N2,
-    D1.get(relation)    == D2.get(relation),
-    D1.get(operation)   == D2.get(operation),
-    D1.get(inputs)      == D2.get(inputs),
-    D1.get(outputs)     == D2.get(outputs),
-    D1.get(constraints) == D2.get(constraints),
-    !.
-
-%% 9. Can be parameterised (differ by numeric operation)
-merge_detect(spec(_, D1), spec(_, D2), can_parameterise) :-
-    D1.get(relation) == map,
-    D2.get(relation) == map,
-    numeric_multiply_op(D1.get(operation)),
-    numeric_multiply_op(D2.get(operation)),
-    D1.get(operation) \== D2.get(operation),
-    !.
-
-%% 10. Share expensive subcalls (same relation, any inputs)
+%% 10. Share expensive subcalls (same relation, different inputs)
 merge_detect(spec(_, D1), spec(_, D2), shared_expensive_subcall) :-
     D1.get(relation) == D2.get(relation),
     D1.get(inputs) \== D2.get(inputs),
@@ -194,10 +196,5 @@ op_multiplier(_, 1).
 
 generate_merged_multiply(N1, N2, M1, M2, Code) :-
     format(string(Code),
-        "multiply_all(_, [], []).~n\
-multiply_all(N, [X|Xs], [Y|Ys]) :-~n\
-    Y is X * N,~n\
-    multiply_all(N, Xs, Ys).~n\
-~w(Xs, Ys) :- multiply_all(~w, Xs, Ys).~n\
-~w(Xs, Ys) :- multiply_all(~w, Xs, Ys).",
+        "multiply_all(_, [], []).~nmultiply_all(N, [X|Xs], [Y|Ys]) :-~n    Y is X * N,~n    multiply_all(N, Xs, Ys).~n~w(Xs, Ys) :- multiply_all(~w, Xs, Ys).~n~w(Xs, Ys) :- multiply_all(~w, Xs, Ys).",
         [N1, M1, N2, M2]).
