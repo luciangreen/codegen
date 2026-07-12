@@ -89,7 +89,7 @@ test(stage5_prioritised_templates_reduce_search_space) :-
     assertion(Templates = [recursion|_]),
     assertion(member(map_filter_fold, Templates)),
     assertion(member(direct, Templates)),
-    assertion(length(Templates, N)),
+    length(Templates, N),
     assertion(N =< 4).
 
 :- end_tests(codegen).
