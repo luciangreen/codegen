@@ -35,9 +35,10 @@
 %% =========================================================
 
 merge_candidates(Specs, Pairs) :-
+    maplist(normalize_spec, Specs, NormalizedSpecs),
     findall(pair(S1, S2, Reason),
-        (member(S1, Specs),
-         member(S2, Specs),
+        (member(S1, NormalizedSpecs),
+         member(S2, NormalizedSpecs),
          S1 @< S2,
          merge_detect(S1, S2, Reason)),
         Pairs).
@@ -50,8 +51,13 @@ merge_candidates(Specs, Pairs) :-
 %% actionable reason is returned on the first call.
 %% =========================================================
 
+merge_detect(Spec1, Spec2, Reason) :-
+    normalize_spec(Spec1, NormalizedSpec1),
+    normalize_spec(Spec2, NormalizedSpec2),
+    merge_detect_normalized(NormalizedSpec1, NormalizedSpec2, Reason).
+
 %% 7. Renamed duplicate (same everything, different name) — most specific
-merge_detect(spec(N1, D1), spec(N2, D2), renamed_duplicate) :-
+merge_detect_normalized(spec(N1, D1), spec(N2, D2), renamed_duplicate) :-
     N1 \== N2,
     D1.get(relation)    == D2.get(relation),
     D1.get(operation)   == D2.get(operation),
@@ -61,7 +67,7 @@ merge_detect(spec(N1, D1), spec(N2, D2), renamed_duplicate) :-
     !.
 
 %% 8. Same structure but differ by operation constant
-merge_detect(spec(_, D1), spec(_, D2), differ_by_constant) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), differ_by_constant) :-
     D1.get(relation) == D2.get(relation),
     D1.get(inputs)   == D2.get(inputs),
     D1.get(outputs)  == D2.get(outputs),
@@ -69,7 +75,7 @@ merge_detect(spec(_, D1), spec(_, D2), differ_by_constant) :-
     !.
 
 %% 9. Can be parameterised (differ by numeric multiply operation)
-merge_detect(spec(_, D1), spec(_, D2), can_parameterise) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), can_parameterise) :-
     D1.get(relation) == map,
     D2.get(relation) == map,
     numeric_multiply_op(D1.get(operation)),
@@ -78,41 +84,41 @@ merge_detect(spec(_, D1), spec(_, D2), can_parameterise) :-
     !.
 
 %% 1. Same input/output examples
-merge_detect(spec(_, D1), spec(_, D2), same_examples) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), same_examples) :-
     D1.get(examples) == D2.get(examples), !.
 
 %% 3. Same invariant / constraints
-merge_detect(spec(_, D1), spec(_, D2), same_invariant) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), same_invariant) :-
     D1.get(constraints) == D2.get(constraints),
     D1.get(constraints) \== [],
     !.
 
 %% 4. Same generator source (same input types)
-merge_detect(spec(_, D1), spec(_, D2), same_generator_source) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), same_generator_source) :-
     D1.get(inputs) == D2.get(inputs),
     D1.get(outputs) == D2.get(outputs),
     !.
 
 %% 5. Same output template (same output types)
-merge_detect(spec(_, D1), spec(_, D2), same_output_template) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), same_output_template) :-
     D1.get(outputs) == D2.get(outputs),
     !.
 
 %% 6. One is a special case: one has extra constraints
-merge_detect(spec(_, D1), spec(_, D2), special_case) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), special_case) :-
     D1.get(relation) == D2.get(relation),
     D1.get(operation) \== D2.get(operation),
     D1.get(inputs) == D2.get(inputs),
     !.
 
 %% 2. Same recursive shape (same relation) — least specific
-merge_detect(spec(_, D1), spec(_, D2), same_recursive_shape) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), same_recursive_shape) :-
     D1.get(relation) == D2.get(relation),
     D1.get(relation) \== transform,
     !.
 
 %% 10. Share expensive subcalls (same relation, different inputs)
-merge_detect(spec(_, D1), spec(_, D2), shared_expensive_subcall) :-
+merge_detect_normalized(spec(_, D1), spec(_, D2), shared_expensive_subcall) :-
     D1.get(relation) == D2.get(relation),
     D1.get(inputs) \== D2.get(inputs),
     !.
@@ -178,8 +184,10 @@ merge_unsafe_reason(pair(spec(_, D1), spec(_, D2), _), incompatible_constraints)
 %% =========================================================
 
 merge_predicates(Spec1, Spec2, MergedCode) :-
-    merge_detect(Spec1, Spec2, Reason),
-    Pair = pair(Spec1, Spec2, Reason),
+    normalize_spec(Spec1, NormalizedSpec1),
+    normalize_spec(Spec2, NormalizedSpec2),
+    merge_detect(NormalizedSpec1, NormalizedSpec2, Reason),
+    Pair = pair(NormalizedSpec1, NormalizedSpec2, Reason),
     \+ merge_unsafe_reason(Pair, _),
     !,
     merge_safe(Pair, merged(_, _, MergedCode)).
@@ -187,6 +195,26 @@ merge_predicates(Spec1, Spec2, MergedCode) :-
 %% =========================================================
 %% Helpers
 %% =========================================================
+
+normalize_spec(spec(Name, DictIn), spec(Name, DictOut)) :-
+    normalize_dict(DictIn, DictOut).
+
+normalize_dict(Dict, Dict) :-
+    is_dict(Dict),
+    !.
+normalize_dict(Term, Dict) :-
+    compound(Term),
+    Term =.. ['.', Base, PutCall],
+    compound(PutCall),
+    PutCall =.. [put, Update],
+    !,
+    normalize_dict(Base, BaseDict),
+    normalize_dict(Update, UpdateDict),
+    dict_pairs(UpdateDict, _, UpdatePairs),
+    maplist(pair_to_kv, UpdatePairs, UpdateKeyValues),
+    put_dict(UpdateKeyValues, BaseDict, Dict).
+
+pair_to_kv(Key-Value, Key-Value).
 
 op_multiplier(double, 2) :- !.
 op_multiplier(triple, 3) :- !.
