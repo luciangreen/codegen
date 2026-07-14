@@ -4,7 +4,9 @@
     starlog_expand/2,
     starlog_expand_code/2,
     starlog_full/3,
-    emit_from_relation_op/4
+    emit_from_relation_op/4,
+    starlog_eval/2,
+    starlog_no_eval/2
 ]).
 
 %% =========================================================
@@ -153,6 +155,22 @@ expr_to_str(append(A, B), Str) :-
     expr_to_str(B, BStr),
     format(string(Str), "~w & ~w", [AStr, BStr]).
 
+% Feature 11 (new): atom concat A • B
+expr_to_str(concat_atom(A, B), Str) :-
+    expr_to_str(A, AStr),
+    expr_to_str(B, BStr),
+    format(string(Str), "~w • ~w", [AStr, BStr]).
+
+% Feature 12 (new): list to term ..=(List)
+expr_to_str(univ_from(L), Str) :-
+    expr_to_str(L, LStr),
+    format(string(Str), "..=(~w)", [LStr]).
+
+% Feature 13 (new): term to list =..(Term)
+expr_to_str(univ_to(T), Str) :-
+    expr_to_str(T, TStr),
+    format(string(Str), "=..(~w)", [TStr]).
+
 % Features 1, 10: value-returning call Name(Args)
 expr_to_str(call(Name, Args), Str) :-
     maplist(expr_to_str, Args, ArgStrs),
@@ -293,6 +311,33 @@ expand_goals(Name,
         "~w(A, B, Result) :-~n    append(A, B, Result).",
         [Name]).
 
+% Feature 11 (new): Result is A • B  (atom concat using atom_concat/3)
+expand_goals(Name,
+    [is(var(result), concat_atom(var(a), var(b)))],
+    Code) :-
+    !,
+    format(string(Code),
+        "~w(A, B, Result) :-~n    atom_concat(A, B, Result).",
+        [Name]).
+
+% Feature 12 (new): T is ..=(List)  (list to term via =..)
+expand_goals(Name,
+    [is(var(result), univ_from(var(a)))],
+    Code) :-
+    !,
+    format(string(Code),
+        "~w(A, Result) :-~n    Result =.. A.",
+        [Name]).
+
+% Feature 13 (new): L is =..(Term)  (term to list via =..)
+expand_goals(Name,
+    [is(var(result), univ_to(var(a)))],
+    Code) :-
+    !,
+    format(string(Code),
+        "~w(A, Result) :-~n    A =.. Result.",
+        [Name]).
+
 % Feature 1 + 10: Result is user_func(Args) (value-returning user predicate)
 expand_goals(Name,
     [is(var(result), call(FuncName, ArgExprs))],
@@ -397,3 +442,25 @@ op_test_goal(_,        "X \\= []").
 op_fold_goal(add,      "Acc1 is Acc + X") :- !.
 op_fold_goal(multiply, "Acc1 is Acc * X") :- !.
 op_fold_goal(_,        "Acc1 is Acc + X").
+
+%% =========================================================
+%% Starlog helpers — evaluate / preserve expressions
+%% =========================================================
+
+%% starlog_eval(+Expr, -Code)
+%%
+%% Evaluates a Starlog expression and emits the expanded Prolog code string.
+%% Wraps the expression as is(var(result), Expr) and expands.
+starlog_eval(Expr, Code) :-
+    AST = starlog_pred(starlog_eval_result, [result],
+              [is(var(result), Expr)]),
+    starlog_expand(AST, expanded(_, Code)).
+
+%% starlog_no_eval(+Expr, -Code)
+%%
+%% Preserves a Starlog expression as data without evaluation.
+%% Emits code that unifies the result with the unevaluated expression.
+starlog_no_eval(Expr, Code) :-
+    AST = starlog_pred(starlog_no_eval_result, [result],
+              [is(var(result), no_eval(Expr))]),
+    starlog_expand(AST, expanded(_, Code)).
