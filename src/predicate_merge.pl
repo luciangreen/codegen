@@ -211,10 +211,7 @@ normalize_dict(Term, Dict) :-
     normalize_dict(Base, BaseDict),
     normalize_dict(Update, UpdateDict),
     dict_pairs(UpdateDict, _, UpdatePairs),
-    maplist(pair_to_kv, UpdatePairs, UpdateKeyValues),
-    put_dict(UpdateKeyValues, BaseDict, Dict).
-
-pair_to_kv(Key-Value, Key-Value).
+    put_dict(UpdatePairs, BaseDict, Dict).
 
 op_multiplier(double, 2) :- !.
 op_multiplier(triple, 3) :- !.
