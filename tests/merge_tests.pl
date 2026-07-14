@@ -170,4 +170,15 @@ test(double_triple_merge_matches_spec) :-
     sub_string(Code, _, _, _, "multiply_all(N, [X|Xs], [Y|Ys])"),
     sub_string(Code, _, _, _, "Y is X * N").
 
+test(merge_accepts_dict_put_update_term) :-
+    double_spec(spec(double_all, D1)),
+    S2 = spec(triple_all, D1.put(_{
+        name: triple_all,
+        operation: triple,
+        examples: [io([1,2,3], [3,6,9])]
+    })),
+    merge_predicates(spec(double_all, D1), S2, Code),
+    sub_string(Code, _, _, _, "double_all"),
+    sub_string(Code, _, _, _, "triple_all").
+
 :- end_tests(stage9_merge).
