@@ -15,7 +15,7 @@ web/chatbot prototypes.
 | Starlog (`src/starlog.pl`) | Emit/expand helpers, supported operators, eval/no-eval entry points | Use the module tests for the supported syntax and evaluation boundaries |
 | Optimisation (`src/optimiser.pl`) | Loop2 conversions and PLOP-style transformations/analysis | Only supported patterns are converted; this is not a general Prolog optimiser |
 | Predicate merge (`src/predicate_merge.pl`) | Merge candidates, parameterised forms, unsafe-merge checks | Suggestions are conservative prototype results, not automatic repository edits |
-| CI/CD agent (`src/cicd_agent.pl`) | Ten-step report shape, failure-category mapping, candidate summaries | Test execution, repairs, and optimisation are currently simulated or identity operations |
+| CI/CD agent (`src/cicd_agent.pl`) | Ten-step report shape, failure-category mapping, candidate summaries; a spec's `io(Input, Output)` examples are run on its candidate code | Specs without examples are reported as untested, not passed; repairs and optimisation are still identity operations |
 | Web UI (`web/`) | Ten-panel static demonstration of the pipeline | Browser-side parser, generation, and test results are illustrative, not connected to SWI-Prolog |
 | Chatbot (`src/chatbot_adapter.pl`) | Rule-based intent classification, data extraction, routing | Manual adapter only; intents do not invoke the full pipeline |
 | Detlog (`src/detlog_opt.pl`) | Mode/cut/effect analysis and conversion annotations | Supported-clause prototype; review fallback diagnostics |
