@@ -142,8 +142,9 @@ cicd_run(ChangedSpecs, ExistingCode, Report) :-
     cicd_step(rerun_tests,      MergedCode2,              _, rerun_result(Results2)),
     %% Step 11
     collect_failures(Results2, FinalFailures),
+    include(is_untested, Results2, Untested),
     produce_explanation(Specs, FinalFailures, Diagnoses, Explanation),
-    produce_commit_summary(Specs, FinalFailures, CommitSummary),
+    produce_commit_summary(Specs, FinalFailures, Untested, CommitSummary),
     Report = report{
         steps_completed:   [read_specs, convert_specs, generate_tests, generate_code,
                             run_tests, diagnose_failures, repair, optimise,
@@ -152,6 +153,7 @@ cicd_run(ChangedSpecs, ExistingCode, Report) :-
         tests:             Tests,
         code:              OptCode,
         failures:          FinalFailures,
+        untested:          Untested,
         diagnosis:         Diagnoses,
         optimised_code:    OptCode,
         merge_suggestions: MergeSuggestions,
@@ -200,7 +202,12 @@ commit_summary(Report, Summary) :-
     length(Report.specs, NSpecs),
     length(Report.failures, NFails),
     length(Report.merge_suggestions, NMerge),
-    (NFails =:= 0
+    ( get_dict(untested, Report, Untested) -> length(Untested, NUntested) ; NUntested = 0 ),
+    (NFails =:= 0, NUntested > 0
+    ->  format(string(Summary),
+            "CI/CD untested: ~w spec(s) processed, no failures, but ~w spec(s) have no examples to test, ~w merge suggestion(s).",
+            [NSpecs, NUntested, NMerge])
+    ;   NFails =:= 0
     ->  format(string(Summary),
             "CI/CD pass: ~w spec(s) processed, all tests pass, ~w merge suggestion(s).",
             [NSpecs, NMerge])
@@ -217,6 +224,14 @@ spec_to_dict(spec(Name, Dict), spec(Name, Dict)) :- !.
 spec_to_dict(Sentence, spec(unknown, _{sentence: Sentence})) :-
     \+ functor(Sentence, spec, 2).
 
+% A spec's examples become a real test: each io(Input, Output) must give
+% Output when the candidate is called as Name(Input, Result). A spec with no
+% examples gets a placeholder, which is reported as untested, never as a pass.
+dict_to_test(spec(Name, Dict), test(Name, examples(IOs))) :-
+    is_dict(Dict),
+    get_dict(examples, Dict, IOs0),
+    include([E]>>(E = io(_, _)), IOs0, IOs),
+    IOs \== [], !.
 dict_to_test(spec(Name, _Dict), test(Name, placeholder)).
 
 dict_to_code(spec(Name, Dict), code(Name, CodeStr)) :-
@@ -229,10 +244,35 @@ dict_to_code(spec(Name, Dict), code(Name, CodeStr)) :-
             [Name])
     ).
 
-simulate_test(_Code, test(Name, placeholder), pass(Name)).
+simulate_test(_Code, test(Name, placeholder), untested(Name)) :- !.
+simulate_test(Codes, test(Name, examples(IOs)), Result) :-
+    (   memberchk(code(Name, CodeStr), Codes)
+    ->  catch(run_examples(Name, CodeStr, IOs, Result), E, Result = error(Name, E))
+    ;   Result = error(Name, no_code)
+    ).
+
+% Load the candidate into a module of its own and call it on each example.
+run_examples(Name, CodeStr, IOs, Result) :-
+    atom_concat(cicd_candidate_, Name, M),
+    forall(current_predicate(M:P/A), (functor(H, P, A), retractall(M:H))),
+    split_clauses(CodeStr, Clauses),
+    forall(member(C, Clauses), assertz(M:C)),
+    (   forall(member(io(In, Out), IOs),
+               ( G =.. [Name, In, Got], once(M:G), Got == Out ))
+    ->  Result = pass(Name)
+    ;   Result = fail(Name)
+    ).
+
+split_clauses(Str, Clauses) :-
+    setup_call_cleanup(open_string(Str, S), read_clauses(S, Clauses), close(S)).
+read_clauses(S, Cs) :-
+    read_term(S, T, []),
+    (   T == end_of_file -> Cs = [] ; Cs = [T|Rest], read_clauses(S, Rest) ).
 
 collect_failures(Results, Failures) :-
     include(is_failure, Results, Failures).
+
+is_untested(untested(_)).
 
 is_failure(fail(_)).
 is_failure(error(_,_)).
@@ -253,9 +293,10 @@ produce_explanation(Specs, Failures, Diagnoses, Explanation) :-
         "Processed ~w spec(s). Failures: ~w. Diagnoses: ~w.",
         [NS, NF, ND]).
 
-produce_commit_summary(Specs, Failures, Summary) :-
+produce_commit_summary(Specs, Failures, Untested, Summary) :-
     length(Specs, NS),
     length(Failures, NF),
+    length(Untested, NU),
     format(string(Summary),
-        "codegen: ~w spec(s), ~w failure(s)",
-        [NS, NF]).
+        "codegen: ~w spec(s), ~w failure(s), ~w untested (no examples)",
+        [NS, NF, NU]).

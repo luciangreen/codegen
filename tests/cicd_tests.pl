@@ -59,11 +59,20 @@ test(step_generate_code_map) :-
     cicd_step(generate_code, [Spec], _, code_ok([code(double_all, Code)])),
     sub_string(Code, _, _, _, "double_all([], [])").
 
-test(step_run_tests_passes) :-
+% A spec with no examples is untested, not passed.
+test(step_run_tests_placeholder_is_untested) :-
     Tests = [test(p, placeholder)],
     Code  = [code(p, "p(X,X).")],
     cicd_step(run_tests, tests_and_code(Tests, Code), _, test_result(Results)),
-    Results = [pass(p)].
+    Results = [untested(p)].
+
+% Examples are run on the candidate code.
+test(step_run_tests_runs_examples) :-
+    Tests = [test(d, examples([io([1,2], [2,4])]))],
+    cicd_step(run_tests, tests_and_code(Tests, [code(d, "d([], []).\nd([X|Xs], [Y|Ys]) :- Y is X*2, d(Xs, Ys).")]), _, test_result(R1)),
+    R1 == [pass(d)],
+    cicd_step(run_tests, tests_and_code(Tests, [code(d, "d(X, X).")]), _, test_result(R2)),
+    R2 == [fail(d)].
 
 %% -------------------------------------------------------
 %% cicd_diagnose/3
